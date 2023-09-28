@@ -48,6 +48,27 @@ If `run_install` is a YAML string representation of either an object or an array
 
 This is useful when you want to use a incompatible pair of Node.js and pnpm.
 
+### `cache`
+
+**Optional** (_type:_ `boolean`, _default:_ `false`) When set to true, the pnpm store will be cached between runs to reduce installation time, using cache_key_prefix combined with pnpm-lock.yaml hash as the key provided to actions/cache.
+
+### `cache_key_prefix`
+
+**Optional** (_type:_ `string`, _default:_ `${{ runner.os }}-pnpm-store-`) Prefix for an explicit key for restoring and saving the cache; will have a hash based on pnpm-lock.yaml appended. Does nothing if cache is not set to true.
+
+This is passed to `actions/cache@v3` as follows:
+
+```yaml
+    - name: Setup pnpm cache
+      if: ${{ inputs.cache == 'true' }}
+      uses: actions/cache@v3
+      with:
+        path: ${{ inputs.dest }}
+        key: ${{ inputs.cache_key_prefix }}${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ inputs.cache_key_prefix }}
+```
+
 ## Outputs
 
 ### `dest`
@@ -124,23 +145,8 @@ jobs:
         name: Install pnpm
         with:
           version: 8
-          run_install: false
-
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install
+          cache: true
+          run_install: true
 ```
 
 **Note:** You don't need to run `pnpm store prune` at the end; post-action has already taken care of that.

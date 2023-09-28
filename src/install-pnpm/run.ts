@@ -5,6 +5,12 @@ import path from 'path'
 import { execPath } from 'process'
 import { Inputs } from '../inputs'
 
+export function updatePnpmHome(dest: string) {
+  const pnpmHome = path.join(dest, 'node_modules/.bin')
+  addPath(pnpmHome)
+  exportVariable('PNPM_HOME', pnpmHome)
+}
+
 export async function runSelfInstaller(inputs: Inputs): Promise<number> {
   const { version, dest, packageJsonFile, standalone } = inputs
 
@@ -26,9 +32,7 @@ export async function runSelfInstaller(inputs: Inputs): Promise<number> {
     cp.on('close', resolve)
   })
   if (exitCode === 0) {
-    const pnpmHome = path.join(dest, 'node_modules/.bin')
-    addPath(pnpmHome)
-    exportVariable('PNPM_HOME', pnpmHome)
+    updatePnpmHome(dest)
   }
   return exitCode
 }

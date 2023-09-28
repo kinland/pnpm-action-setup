@@ -1,8 +1,8 @@
 import { setFailed, startGroup, endGroup } from '@actions/core'
 import { Inputs } from '../inputs'
-import runSelfInstaller from './run'
+import runSelfInstaller, { updatePnpmHome } from './run'
 
-export { runSelfInstaller }
+export { runSelfInstaller, updatePnpmHome }
 
 export async function install(inputs: Inputs) {
   startGroup('Running self-installer...')

@@ -1,6 +1,6 @@
 import { setFailed, saveState, getState } from '@actions/core'
 import getInputs from './inputs'
-import installPnpm from './install-pnpm'
+import installPnpm, { updatePnpmHome } from './install-pnpm'
 import setOutputs from './outputs'
 import pnpmInstall from './pnpm-install'
 import pruneStore from './pnpm-store-prune'
@@ -10,8 +10,12 @@ async function main() {
   const isPost = getState('is_post')
   if (isPost === 'true') return pruneStore(inputs)
   saveState('is_post', 'true')
-  await installPnpm(inputs)
-  console.log('Installation Completed!')
+  if (!inputs.skipPnpmInstall) {
+    await installPnpm(inputs)
+    console.log('Installation Completed!')
+  } else {
+    updatePnpmHome(inputs.dest)
+  }
   setOutputs(inputs)
   pnpmInstall(inputs)
 }

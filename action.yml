@@ -23,7 +23,56 @@ inputs:
     description: When set to true, @pnpm/exe, which is a Node.js bundled package, will be installed, enabling using pnpm without Node.js.
     required: false
     default: 'false'
+  cache:
+    description: When set to true, the pnpm store will be cached between runs, using cache_key_prefix combined with pnpm-lock.yaml hash as the key provided to actions/cache.
+    required: false
+    default: 'false'
+  cache_key_prefix:
+    description: Prefix for an explicit key for restoring and saving the cache; will have a hash based on pnpm-lock.yaml appended. Does nothing if cache is not set to true.
+    required: false
+    default: ${{ runner.os }}-pnpm-store-
+outputs:
+  dest:
+    description: Expanded path of inputs#dest.
+    value: ${{ steps.install_pnpm.outputs.dest }}
+  bin_dest:
+    description: Location of pnpm and pnpx command.
+    value: ${{ steps.install_pnpm.outputs.bin_dest }}
 runs:
-  using: node16
-  main: dist/index.js
-  post: dist/index.js
+  using: 'composite'
+  steps:
+    - name: Install pnpm
+      id: install_pnpm
+      uses: ./.github/actions/setup-pnpm
+      with:
+        version: ${{ inputs.version }}
+        dest: ${{ inputs.dest }}
+        run_install: ${{ inputs.cache != 'true' && inputs.run_install || false }}
+        skip_pnpm_install: false
+        package_json_file: ${{ inputs.package_json_file }}
+        standalone: ${{ inputs.standalone }}
+
+    - name: Setup pnpm cache
+      if: ${{ inputs.cache == 'true' }}
+      uses: actions/cache@v3
+      with:
+        path: |
+          ${{ inputs.dest }}
+          ${{ env.XDG_DATA_HOME }}/pnpm/global
+          ~/AppData/Local/pnpm/global
+          ~/Library/pnpm/global
+          ~/.local/share/pnpm/global
+        key: ${{ format('{0}{1}', inputs.cache_key_prefix, hashFiles('**/pnpm-lock.yaml')) }}
+        restore-keys: |
+          ${{ inputs.cache_key_prefix }}
+
+    - name: Install dependencies
+      if: ${{ inputs.cache == 'true' && inputs.run_install != 'null' && inputs.run_install != 'false' }}
+      uses: ./.github/actions/setup-pnpm
+      with:
+        version: ${{ inputs.version }}
+        dest: ${{ inputs.dest }}
+        run_install: ${{ inputs.run_install }}
+        skip_pnpm_install: true
+        package_json_file: ${{ inputs.package_json_file }}
+        standalone: ${{ inputs.standalone }}

@@ -1,0 +1,33 @@
+name: Install pnpm
+description: Install pnpm package manager
+branding:
+  icon: package
+  color: orange
+inputs:
+  version:
+    description: Version of pnpm to install
+    required: false
+  dest:
+    description: Where to store pnpm files
+    required: false
+    default: ~/setup-pnpm
+  run_install:
+    description: If specified, run `pnpm install`
+    required: false
+    default: 'null'
+  skip_pnpm_install:
+    description: If run_install and skip_pnpm_install are both true, bypass installing pnpm and just install/prune packages.
+    required: false
+    default: 'false'
+  package_json_file:
+    description: File path to the package.json to read "packageManager" configuration
+    required: false
+    default: 'package.json'
+  standalone:
+    description: When set to true, @pnpm/exe, which is a Node.js bundled package, will be installed, enabling using pnpm without Node.js.
+    required: false
+    default: 'false'
+runs:
+  using: node16
+  main: ../../../dist/index.js
+  post: ../../../dist/index.js
